@@ -870,30 +870,22 @@ __docker_service_subcommand() {
         (inspect)
             _arguments $(__docker_arguments) \
                 $opts_help \
-                "($help -f --format)"{-f=,--format=}"[Format the output using the given go template]:template: " \
-                "($help -)1:service:__docker_services" && ret=0
+                "($help -f --format)"{-f=,--format=}"[Format the output using the given go template]:template: " && ret=0
             ;;
         (tasks)
             _arguments $(__docker_arguments) \
                 $opts_help \
                 "($help -f --format)"{-f=,--format=}"[Format the output using the given go template]:template: " \
-                "($help -)1:service:__docker_services" && ret=0
+                "($help -p --pretty)"{-p,--pretty}"[Print the information ina human friendly format.]:: " && ret=0
             ;;
         (ls)
             _arguments $(__docker_arguments) \
                 $opts_help \
                 "($help)*"{-f=,--filter=}"[Provide filter values]:filter:->filter-options" \
                 "($help -q --quiet)"{-q,--quiet}"[Only display IDs]" && ret=0
-            case $state in
-                (filter-options)
-                    __docker_service_complete_ls_filters && ret=0
-                    ;;
-            esac
-            ;;
         (rm)
             _arguments $(__docker_arguments) \
-                $opts_help \
-                "($help -):service:__docker_services" && ret=0
+                $opts_help && ret=0
             ;;
         (scale)
             _arguments $(__docker_arguments)
