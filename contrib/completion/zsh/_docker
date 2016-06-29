@@ -910,6 +910,54 @@ __docker_service_subcommand() {
 
     return ret
 }
+
+__docker_stack_commands() {
+    local -a _docker_stack_subcommands
+    _docker_stack_subcommands=(
+        "config:Print the stack configuration"
+        "deploy:Create and update a stack"
+        "rm:Remove the stack"
+        "tasks:List the tasks in the stack"
+    )
+    _describe -t docker-stack-commands "docker service command" _docker_stack_subcommands
+}
+
+__docker_stack_subcommand() {
+    local -a _command_args opts_help
+    local expl help="--help"
+    integer ret=1
+
+    opts_help=("(: -)--help[Print usage]")
+
+    case "$words[1]" in
+        (config)
+            _arguments $(__docker_arguments) \
+                $opts_help \
+                "($help)*"{-f=,--bundle=}"[Path to a bundle (Default: STACK.dsb)]:bundle=string: " && ret=0
+            ;;
+        (deploy)
+            _arguments $(__docker_arguments) \
+                $opts_help \
+                "($help)*"{-f=,--bundle=}"[Path to a bundle (Default: STACK.dsb)]:bundle=string: " && ret=0
+            ;;
+        (rm)
+            _arguments $(__docker_arguments) \
+                $opts_help && ret=0
+            ;;
+        (tasks)
+            _arguments $(__docker_arguments) \
+                $opts_help \
+                "($help)*"{-a=,--all=}"[Display all tasks] " \
+                "($help)*"{-f=,--filter=}"[Filter output based on conditions provided]:filter=value: " \
+                "($help)*"{-n=,--no-resolve=}"[Do not map IDs to Names] " && ret=0
+        (help)
+            _arguments $(__docker_arguments) ":subcommand:__docker_stack_commands" && ret=0
+            ;;
+    esac
+
+    return ret
+}
+
 __docker_caching_policy() {
   oldp=( "$1"(Nmh+1) )     # 1 hour
   (( $#oldp ))
@@ -1474,6 +1522,23 @@ __docker_subcommand() {
                 (option-or-argument)
                     curcontext=${curcontext%:*:*}:docker-${words[-1]}:
                     __docker_service_subcommand && ret=0
+                    ;;
+            esac
+            ;;
+        (stack)
+            local curcontext="$curcontext" state
+            _arguments $(__docker_arguments) \
+                $opts_help \
+                "($help -): :->command" \
+                "($help -)*:: :->option-or-argument" && ret=0
+
+            case $state in
+                (command)
+                    __docker_stack_commands && ret=0
+                    ;;
+                (option-or-argument)
+                    curcontext=${curcontext%:*:*}:docker-${words[-1]}:
+                    __docker_stack_subcommand && ret=0
                     ;;
             esac
             ;;
