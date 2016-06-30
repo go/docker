@@ -810,6 +810,38 @@ __docker_swarm_subcommand() {
     return ret
 }
 
+__docker_services() {
+    [[ $PREFIX = -* ]] && return 1
+    integer ret=1
+    declare -a lines services
+
+    lines=(${(f)"$(_call_program commands docker $docker_options service ls)"})
+
+    # Parse header line to find columns
+    local i=1 j=1 k header=${lines[1]}
+    declare -A begin end
+    while (( j < ${#header} - 1 )); do
+        i=$(( j + ${${header[$j,-1]}[(i)[^ ]]} - 1 ))
+        j=$(( i + ${${header[$i,-1]}[(i)  ]} - 1 ))
+        k=$(( j + ${${header[$j,-1]}[(i)[^ ]]} - 2 ))
+        begin[${header[$i,$((j-1))]}]=$i
+        end[${header[$i,$((j-1))]}]=$k
+    done
+    end[${header[$i,$((j-1))]}]=-1
+    lines=(${lines[2,-1]})
+
+    # Names
+    local line s
+    for line in $lines; do
+        s="${line[${begin[ID]},${end[ID]}]%% ##}"
+        s="$s:${(l:20:: :::)${${line[${begin[NAME]},${end[NAME]}]}%% ##}}"
+        services=($services $s)
+    done
+
+    _describe -t services-list "services" services && ret=0
+    return ret
+}
+
 __docker_service_commands() {
     local -a _docker_service_subcommands
     _docker_service_subcommands=(
@@ -863,14 +895,16 @@ __docker_service_subcommand() {
             _arguments $(__docker_arguments) \
                 $opts_help \
                 "($help -f --format)"{-f=,--format=}"[Format the output using the given go template]:format=string: " \
-                "($help -p --pretty)"{-p,--pretty}"[Print the information in a human friendly format.]" && ret=0
+                "($help -p --pretty)"{-p,--pretty}"[Print the information in a human friendly format.]" \
+                "($help -)1:service:__docker_services" && ret=0
             ;;
         (tasks)
             _arguments $(__docker_arguments) \
                 $opts_help \
                 "($help -a --all)"{-a=,--all=}"[Display all tasks]" \
                 "($help -f --filter)"{-f=,--filter=}"[Filter output based on conditions provided]:filter=value: " \
-                "($help -n --no-resolve)"{-n=,--noresolve}"[Do not map IDs to Names]" && ret=0
+                "($help -n --no-resolve)"{-n=,--noresolve}"[Do not map IDs to Names]" \
+                "($help -)1:service:__docker_services" && ret=0
             ;;
         (ls)
             _arguments $(__docker_arguments) \
@@ -880,11 +914,13 @@ __docker_service_subcommand() {
             ;;
         (rm)
             _arguments $(__docker_arguments) \
-                $opts_help && ret=0
+                $opts_help \
+                "($help -)*:service:__docker_services" && ret=0
             ;;
         (scale)
             _arguments $(__docker_arguments) \
-                $opts_help && ret=0
+                $opts_help \
+                "($help -)*:service=value:__docker_services" && ret=0
             ;;
         (update)
             _arguments $(__docker_arguments) \
