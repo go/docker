@@ -1759,7 +1759,7 @@ a base64-encoded AuthConfig object.
     {
             "username": "jdoe",
             "password": "secret",
-            "email": "jdoe@acme.com",
+            "email": "jdoe@acme.com"
     }
         ```
 
@@ -3663,7 +3663,7 @@ Join an existing new Swarm
 
     {
       "ListenAddr": "0.0.0.0:4500",
-      "RemoteAddr": "node1:4500",
+      "RemoteAddrs": ["node1:4500"],
       "Secret": "",
       "CACertHash": "",
       "Manager": false
